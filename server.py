@@ -4,17 +4,23 @@ import json
 import cv2
 import os
 from datetime import datetime
-import time
+import gesture_recognizer as gr
 
 # === Setup ===
-output_folder = "capturi_din_virtualcam"
+output_folder = "virtual_camera_imgs"
 os.makedirs(output_folder, exist_ok=True)
+recognizer = gr.GestureRecognizer()
+
+CAMERA_WIDTH = 800
+CAMERA_HEIGHT = 600
 
 # === Încearcă să deschidă camera virtuală OBS ===
 def get_virtual_camera_index():
     for i in range(5):  # testăm primele 5 camere
         cap = cv2.VideoCapture(i)
         if cap.isOpened():
+            cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH)
+            cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT)
             ret, _ = cap.read()
             cap.release()
             if ret:
@@ -36,17 +42,26 @@ async def gesture_server(websocket):
                 print("❌ Nu pot citi din camera virtuală.")
                 break
 
-            # Salvăm imaginea
-            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-            filename = os.path.join(output_folder, f"frame_{timestamp}.jpg")
-            cv2.imwrite(filename, frame)
-            print(f"[📸] Poză salvată: {filename}")
+            # Salvează imaginea curentă în folderul de ieșire
+            # timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            # image_path = os.path.join(output_folder, f"frame_{timestamp}.jpg")
+            # cv2.imwrite(image_path, frame)
+            # print(f"✅ Imagine salvată: {image_path}")
+
+            # Procesăm imaginea pentru a prezice gestul
+            predicted_gesture = recognizer.process_image(frame)
+            if predicted_gesture:
+                print(f"Predicted gesture: {predicted_gesture}")
+            else:
+                print("Niciun gest detectat")
 
             # Trimitem un mesaj dummy prin WebSocket
-            message = json.dumps({"text": f"Poză capturată la {timestamp}"})
+            message = json.dumps({
+                "text": predicted_gesture if predicted_gesture else "N/A",
+            })
             await websocket.send(message)
 
-            await asyncio.sleep(2)
+            await asyncio.sleep(0.1)  # așteptăm 100ms între cadre
 
     except websockets.exceptions.ConnectionClosed:
         print("Client disconnected")

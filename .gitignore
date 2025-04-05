@@ -173,4 +173,6 @@ cython_debug/
 # PyPI configuration file
 .pypirc
 
-capturi_din_virtualcam/
+virtual_camera_imgs/
+model/
+words_alpha.txt
