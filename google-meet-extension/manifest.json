@@ -1,0 +1,14 @@
+{
+    "manifest_version": 3,
+    "name": "Gesture Meet Extension",
+    "version": "1.0",
+    "description": "Sign language to text for Google Meet",
+    "permissions": ["activeTab", "storage"],
+    "content_scripts": [
+      {
+        "matches": ["https://meet.google.com/*"],
+        "js": ["content.js"],
+        "css": ["styles.css"]
+      }
+    ]
+  }
